@@ -539,6 +539,8 @@ var _recipeViewJs = require("./views/recipeView.js");
 var _recipeViewJsDefault = parcelHelpers.interopDefault(_recipeViewJs);
 var _searchView = require("./views/searchView");
 var _searchViewDefault = parcelHelpers.interopDefault(_searchView);
+var _resultsViewJs = require("./views/resultsView.js");
+var _resultsViewJsDefault = parcelHelpers.interopDefault(_resultsViewJs);
 var _runtime = require("regenerator-runtime/runtime");
 const controlRecipes = async function() {
     try {
@@ -557,6 +559,7 @@ const controlRecipes = async function() {
 };
 const controlSearchResults = async function() {
     try {
+        (0, _resultsViewJsDefault.default).renderSpinner();
         const query = (0, _searchViewDefault.default).getQuery();
         if (!query) return;
         await _modelJs.loadSearchResults(query);
@@ -571,7 +574,7 @@ const init = function() {
 };
 init();
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","core-js/modules/web.immediate.js":"49tUX","regenerator-runtime/runtime":"dXNgZ","./model.js":"Y4A21","./views/recipeView.js":"l60JC","./views/searchView":"9OQAM"}],"gkKU3":[function(require,module,exports) {
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","core-js/modules/web.immediate.js":"49tUX","regenerator-runtime/runtime":"dXNgZ","./model.js":"Y4A21","./views/recipeView.js":"l60JC","./views/searchView":"9OQAM","./views/resultsView.js":"cSbZE"}],"gkKU3":[function(require,module,exports) {
 exports.interopDefault = function(a) {
     return a && a.__esModule ? a : {
         default: a
@@ -2823,7 +2826,7 @@ class SearchView {
         this._clearInput();
         return query;
     }
-     #clearInput() {
+    _clearInput() {
         return this._parentEl.querySelector(".search__field").value = "";
     }
     addHandlerSearch(handler) {
@@ -2835,6 +2838,16 @@ class SearchView {
 }
 exports.default = new SearchView();
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["fA0o9","aenu9"], "aenu9", "parcelRequire23b9")
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"cSbZE":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _viewJs = require("./View.js");
+var _viewJsDefault = parcelHelpers.interopDefault(_viewJs);
+class ResultsView extends (0, _viewJsDefault.default) {
+    _parentElement = document.querySelector(".results");
+}
+exports.default = new ResultsView();
+
+},{"./View.js":"5cUXS","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["fA0o9","aenu9"], "aenu9", "parcelRequire23b9")
 
 //# sourceMappingURL=index.e37f48ea.js.map
