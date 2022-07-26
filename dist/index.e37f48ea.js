@@ -557,7 +557,9 @@ const controlRecipes = async function() {
 };
 const controlSearchResults = async function() {
     try {
-        await _modelJs.loadSearchResults("pizza");
+        const query = (0, _searchViewDefault.default).getQuery();
+        if (!query) return;
+        await _modelJs.loadSearchResults(query);
         console.log(_modelJs.state.search.results);
     } catch (err) {
         console.log(err);
@@ -2805,6 +2807,9 @@ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 class SearchView {
     #parentEl = document.querySelector(".search");
+    getQuery() {
+        return this.#parentEl.querySelector(".search_field").value;
+    }
 }
 exports.default = new SearchView();
 
