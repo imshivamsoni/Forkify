@@ -565,9 +565,9 @@ const controlSearchResults = async function() {
         console.log(err);
     }
 };
-controlSearchResults();
 const init = function() {
     (0, _recipeViewJsDefault.default).addHandlerRender(controlRecipes);
+    (0, _searchViewDefault.default).addHandlerSearch(controlSearchResults);
 };
 init();
 
@@ -2808,7 +2808,13 @@ parcelHelpers.defineInteropFlag(exports);
 class SearchView {
     #parentEl = document.querySelector(".search");
     getQuery() {
-        return this.#parentEl.querySelector(".search_field").value;
+        return this.#parentEl.querySelector(".search__field").value;
+    }
+    addHandlerSearch(handler) {
+        this.#parentEl.addEventListener("submit", function(e) {
+            e.preventDefault();
+            handler();
+        });
     }
 }
 exports.default = new SearchView();
