@@ -2820,8 +2820,12 @@ class View {
         this._data = data;
         const newMarkup = this._generateMarkup();
         const newDOM = document.createRange().createContextualFragment(newMarkup);
-        const newElements = newDOM.querySelectorAll("*");
-        console.log(newElements);
+        const newElements = Array.from(newDOM.querySelectorAll("*"));
+        const curElements = Array.from(this._parentElement.querySelectorAll("*"));
+        newElements.forEach((newEl, i)=>{
+            const curEl = curElements[i];
+            if (!newEl.isEqualNode(curEl) && newEl.firstChild?.nodeValue.trim() != "") curEl.textContent = newEl.textContent;
+        });
     }
     _clear() {
         this._parentElement.innerHTML = "";
