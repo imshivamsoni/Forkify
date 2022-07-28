@@ -6,6 +6,8 @@ import paginationView from './views/paginationView.js';
 import bookmarksView from './views/bookmarksView.js';
 import addRecipeView from './views/addRecipeView.js';
 
+import { MODAL_CLOSE_SECONDS } from './config.js';
+
 import 'core-js/stable';
 import 'regenerator-runtime/runtime';
 import { async } from 'regenerator-runtime';
@@ -78,8 +80,20 @@ const controlBookmarks = function () {
 
 const controlAddRecipe = async function (newRecipe) {
   try {
+    addRecipeView.renderSpinner();
+
     await model.uploadRecipe(newRecipe);
     console.log(model.state.recipe);
+
+    recipeView.render(model.state.recipe);
+
+    //Success Message
+    addRecipeView.renderMessage();
+
+    //Close Add Recipe Window
+    setTimeout(function () {
+      addRecipeView.toggleWindow();
+    }, MODAL_CLOSE_SECONDS * 1000);
   } catch (err) {
     console.log(err);
     addRecipeView.renderError(err.message);
