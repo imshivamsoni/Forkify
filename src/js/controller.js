@@ -4,15 +4,11 @@ import searchView from './views/searchView';
 import resultsView from './views/resultsView.js';
 import paginationView from './views/paginationView.js';
 import bookmarksView from './views/bookmarksView.js';
+import addRecipeView from './views/addRecipeView.js';
 
 import 'core-js/stable';
 import 'regenerator-runtime/runtime';
-import recipeView from './views/recipeView.js';
-import { Module } from 'module';
-
-if (module.hot) {
-  module.hot.accept();
-}
+import { async } from 'regenerator-runtime';
 
 const controlRecipes = async function () {
   try {
@@ -22,7 +18,7 @@ const controlRecipes = async function () {
     recipeView.renderSpinner();
 
     resultsView.update(model.getSearchResultsPage());
-
+    bookmarksView.update(model.state.bookmarks);
     //loading
 
     await model.loadRecipe(id);
@@ -31,7 +27,6 @@ const controlRecipes = async function () {
     //rendering
 
     recipeView.render(model.state.recipe);
-    bookmarksView.update(model.state.bookmarks);
   } catch (err) {
     recipeView.renderError();
     console.log(err);
@@ -71,6 +66,7 @@ const controlAddBookmark = function () {
   if (!model.state.recipe.bookmarked) model.addBookmark(model.state.recipe);
   else model.deleteBookmark(model.state.recipe.id);
   //console.log(model.state.recipe);
+
   recipeView.update(model.state.recipe);
 
   bookmarksView.render(model.state.bookmarks);
@@ -80,13 +76,18 @@ const controlBookmarks = function () {
   bookmarksView.render(model.state.bookmarks);
 };
 
+const controlAddRecipe = function (newRecipe) {
+  console.log(newRecipe);
+};
+
 const init = function () {
+  bookmarksView.addHandlerRender(controlBookmarks);
   recipeView.addHandlerRender(controlRecipes);
   recipeView.addHandlerUpdateServings(controlServings);
   recipeView.addHandlerAddBookmark(controlAddBookmark);
   searchView.addHandlerSearch(controlSearchResults);
   paginationView.addHandlerClick(controlPagination);
-  bookmarksView.addHandlerRender(controlBookmarks);
+  addRecipeView.addHandlerUpload(controlAddRecipe);
 };
 
 init();

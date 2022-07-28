@@ -17,7 +17,11 @@ export const loadRecipe = async function (id) {
     const data = await getJSON(`${API_URL}${id}`);
     //console.log(res, data);
     const { recipe } = data.data;
-
+    /*
+    if (state.bookmarks.some((bookmark) => bookmark.id === id))
+      state.recipe.bookmarked = true;
+    else state.recipe.bookmarked = false;
+    */
     state.recipe = {
       id: recipe.id,
       title: recipe.title,
@@ -28,7 +32,7 @@ export const loadRecipe = async function (id) {
       cookingTime: recipe.cooking_time,
       ingredients: recipe.ingredients,
     };
-    console.log(state.recipe);
+    //console.log(state.recipe);
   } catch (err) {
     console.error(err);
     throw err;
@@ -72,7 +76,7 @@ export const updateServings = function (newServings) {
   state.recipe.servings = newServings;
 };
 
-const persistBookmarks = function (recipe) {
+const persistBookmarks = function () {
   localStorage.setItem('bookmarks', JSON.stringify(state.bookmarks));
 };
 
@@ -101,3 +105,8 @@ const init = function () {
 
 init();
 console.log(state.bookmarks);
+
+const clearBookmarks = function () {
+  localStorage.clear('bookmarks');
+};
+//clearBookmarks();
