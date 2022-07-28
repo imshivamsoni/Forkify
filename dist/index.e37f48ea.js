@@ -630,37 +630,7 @@ const init = function() {
 };
 init();
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","core-js/modules/web.immediate.js":"49tUX","regenerator-runtime/runtime":"dXNgZ","./model.js":"Y4A21","./views/recipeView.js":"l60JC","./views/searchView":"9OQAM","./views/resultsView.js":"cSbZE","./views/paginationView.js":"6z7bi","./views/bookmarksView.js":"4Lqzq","regenerator-runtime":"dXNgZ","./views/addRecipeView.js":"i6DNj","./config.js":"k5Hzs"}],"gkKU3":[function(require,module,exports) {
-exports.interopDefault = function(a) {
-    return a && a.__esModule ? a : {
-        default: a
-    };
-};
-exports.defineInteropFlag = function(a) {
-    Object.defineProperty(a, "__esModule", {
-        value: true
-    });
-};
-exports.exportAll = function(source, dest) {
-    Object.keys(source).forEach(function(key) {
-        if (key === "default" || key === "__esModule" || dest.hasOwnProperty(key)) return;
-        Object.defineProperty(dest, key, {
-            enumerable: true,
-            get: function() {
-                return source[key];
-            }
-        });
-    });
-    return dest;
-};
-exports.export = function(dest, destName, get) {
-    Object.defineProperty(dest, destName, {
-        enumerable: true,
-        get: get
-    });
-};
-
-},{}],"49tUX":[function(require,module,exports) {
+},{"core-js/modules/web.immediate.js":"49tUX","./model.js":"Y4A21","./views/recipeView.js":"l60JC","./views/searchView":"9OQAM","./views/resultsView.js":"cSbZE","./views/paginationView.js":"6z7bi","./views/bookmarksView.js":"4Lqzq","./views/addRecipeView.js":"i6DNj","./config.js":"k5Hzs","regenerator-runtime/runtime":"dXNgZ","regenerator-runtime":"dXNgZ","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"49tUX":[function(require,module,exports) {
 // TODO: Remove this module from `core-js@4` since it's split to modules listed below
 require("../modules/web.clear-immediate");
 require("../modules/web.set-immediate");
@@ -1755,7 +1725,146 @@ $({
     setImmediate: setImmediate
 });
 
-},{"../internals/export":"dIGt4","../internals/global":"i8HOC","../internals/task":"7jDg7"}],"dXNgZ":[function(require,module,exports) {
+},{"../internals/export":"dIGt4","../internals/global":"i8HOC","../internals/task":"7jDg7"}],"Y4A21":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "state", ()=>state);
+parcelHelpers.export(exports, "loadRecipe", ()=>loadRecipe);
+parcelHelpers.export(exports, "loadSearchResults", ()=>loadSearchResults);
+parcelHelpers.export(exports, "getSearchResultsPage", ()=>getSearchResultsPage);
+parcelHelpers.export(exports, "updateServings", ()=>updateServings);
+parcelHelpers.export(exports, "addBookmark", ()=>addBookmark);
+parcelHelpers.export(exports, "deleteBookmark", ()=>deleteBookmark);
+parcelHelpers.export(exports, "uploadRecipe", ()=>uploadRecipe);
+var _regeneratorRuntime = require("regenerator-runtime");
+var _config = require("./config");
+//import { getJSON, sendJSON } from './helpers';
+var _helpers = require("./helpers");
+const state = {
+    recipe: {},
+    search: {
+        query: "",
+        results: [],
+        resultsPerPage: (0, _config.RES_PER_PAGE),
+        page: 1
+    },
+    bookmarks: []
+};
+const createRecipeObject = function(data) {
+    const { recipe  } = data.data;
+    return {
+        id: recipe.id,
+        title: recipe.title,
+        publisher: recipe.publisher,
+        sourceUrl: recipe.source_url,
+        image: recipe.image_url,
+        servings: recipe.servings,
+        cookingTime: recipe.cooking_time,
+        ingredients: recipe.ingredients,
+        ...recipe.key && {
+            key: recipe.key
+        }
+    };
+};
+const loadRecipe = async function(id) {
+    try {
+        const data = await (0, _helpers.AJAX)(`${(0, _config.API_URL)}${id}?key=${(0, _config.KEY)}`);
+        state.recipe = createRecipeObject(data);
+        if (state.bookmarks.some((bookmark)=>bookmark.id === id)) state.recipe.bookmarked = true;
+        else state.recipe.bookmarked = false;
+    //console.log(state.recipe);
+    } catch (err) {
+        console.error(err);
+        throw err;
+    }
+};
+const loadSearchResults = async function(query) {
+    try {
+        state.search.query = query;
+        const data = await (0, _helpers.AJAX)(`${(0, _config.API_URL)}?search=${query}&key=${(0, _config.KEY)}`);
+        console.log(data);
+        state.search.results = data.data.recipes.map((rec)=>{
+            return {
+                id: rec.id,
+                title: rec.title,
+                publisher: rec.publisher,
+                image: rec.image_url,
+                ...rec.key && {
+                    key: rec.key
+                }
+            };
+        });
+        state.search.page = 1;
+    } catch (err) {
+        console.log(err);
+        throw err;
+    }
+};
+const getSearchResultsPage = function(page = state.search.page) {
+    state.search.page = page;
+    const start = (page - 1) * state.search.resultsPerPage;
+    const end = page * state.search.resultsPerPage;
+    return state.search.results.slice(start, end);
+};
+const updateServings = function(newServings) {
+    state.recipe.ingredients.forEach((ing)=>{
+        ing.quantity = ing.quantity * newServings / state.recipe.servings;
+    });
+    state.recipe.servings = newServings;
+};
+const persistBookmarks = function() {
+    localStorage.setItem("bookmarks", JSON.stringify(state.bookmarks));
+};
+const addBookmark = function(recipe) {
+    state.bookmarks.push(recipe);
+    if (recipe.id === state.recipe.id) state.recipe.bookmarked = true;
+    persistBookmarks();
+};
+const deleteBookmark = function(id) {
+    const index = state.bookmarks.findIndex((el)=>el.id === id);
+    state.bookmarks.splice(index, 1);
+    if (id === state.recipe.id) state.recipe.bookmarked = false;
+    persistBookmarks();
+};
+const init = function() {
+    const storage = localStorage.getItem("bookmarks");
+    if (storage) state.bookmarks = JSON.parse(storage);
+};
+init();
+console.log(state.bookmarks);
+const clearBookmarks = function() {
+    localStorage.clear("bookmarks");
+};
+const uploadRecipe = async function(newRecipe) {
+    try {
+        const ingredients = Object.entries(newRecipe).filter((entry)=>entry[0].startsWith("ingredient") && entry[1] !== "").map((ing)=>{
+            const ingArr = ing[1].split(",").map((el)=>el.trim());
+            if (ingArr.length !== 3) throw new Error("Wrong ingredient format");
+            const [quantity, unit, description] = ingArr;
+            return {
+                quantity: quantity ? +quantity : null,
+                unit,
+                description
+            };
+        });
+        const recipe = {
+            title: newRecipe.title,
+            source_url: newRecipe.sourceUrl,
+            image_url: newRecipe.image,
+            publisher: newRecipe.publisher,
+            cooking_time: +newRecipe.cookingTime,
+            servings: +newRecipe.servings,
+            ingredients
+        };
+        const data = await (0, _helpers.AJAX)(`${(0, _config.API_URL)}?key=${(0, _config.KEY)}`, recipe);
+        state.recipe = createRecipeObject(data);
+        addBookmark(state.recipe);
+    } catch (err) {
+        throw err;
+    }
+};
+
+},{"regenerator-runtime":"dXNgZ","./config":"k5Hzs","./helpers":"hGI1E","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"dXNgZ":[function(require,module,exports) {
 /**
  * Copyright (c) 2014-present, Facebook, Inc.
  *
@@ -2322,146 +2431,7 @@ try {
     else Function("r", "regeneratorRuntime = r")(runtime);
 }
 
-},{}],"Y4A21":[function(require,module,exports) {
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "state", ()=>state);
-parcelHelpers.export(exports, "loadRecipe", ()=>loadRecipe);
-parcelHelpers.export(exports, "loadSearchResults", ()=>loadSearchResults);
-parcelHelpers.export(exports, "getSearchResultsPage", ()=>getSearchResultsPage);
-parcelHelpers.export(exports, "updateServings", ()=>updateServings);
-parcelHelpers.export(exports, "addBookmark", ()=>addBookmark);
-parcelHelpers.export(exports, "deleteBookmark", ()=>deleteBookmark);
-parcelHelpers.export(exports, "uploadRecipe", ()=>uploadRecipe);
-var _regeneratorRuntime = require("regenerator-runtime");
-var _config = require("./config");
-//import { getJSON, sendJSON } from './helpers';
-var _helpers = require("./helpers");
-const state = {
-    recipe: {},
-    search: {
-        query: "",
-        results: [],
-        resultsPerPage: (0, _config.RES_PER_PAGE),
-        page: 1
-    },
-    bookmarks: []
-};
-const createRecipeObject = function(data) {
-    const { recipe  } = data.data;
-    return {
-        id: recipe.id,
-        title: recipe.title,
-        publisher: recipe.publisher,
-        sourceUrl: recipe.source_url,
-        image: recipe.image_url,
-        servings: recipe.servings,
-        cookingTime: recipe.cooking_time,
-        ingredients: recipe.ingredients,
-        ...recipe.key && {
-            key: recipe.key
-        }
-    };
-};
-const loadRecipe = async function(id) {
-    try {
-        const data = await (0, _helpers.AJAX)(`${(0, _config.API_URL)}${id}?key=${(0, _config.KEY)}`);
-        state.recipe = createRecipeObject(data);
-        if (state.bookmarks.some((bookmark)=>bookmark.id === id)) state.recipe.bookmarked = true;
-        else state.recipe.bookmarked = false;
-    //console.log(state.recipe);
-    } catch (err) {
-        console.error(err);
-        throw err;
-    }
-};
-const loadSearchResults = async function(query) {
-    try {
-        state.search.query = query;
-        const data = await (0, _helpers.AJAX)(`${(0, _config.API_URL)}?search=${query}&key=${(0, _config.KEY)}`);
-        console.log(data);
-        state.search.results = data.data.recipes.map((rec)=>{
-            return {
-                id: rec.id,
-                title: rec.title,
-                publisher: rec.publisher,
-                image: rec.image_url,
-                ...rec.key && {
-                    key: rec.key
-                }
-            };
-        });
-        state.search.page = 1;
-    } catch (err) {
-        console.log(err);
-        throw err;
-    }
-};
-const getSearchResultsPage = function(page = state.search.page) {
-    state.search.page = page;
-    const start = (page - 1) * state.search.resultsPerPage;
-    const end = page * state.search.resultsPerPage;
-    return state.search.results.slice(start, end);
-};
-const updateServings = function(newServings) {
-    state.recipe.ingredients.forEach((ing)=>{
-        ing.quantity = ing.quantity * newServings / state.recipe.servings;
-    });
-    state.recipe.servings = newServings;
-};
-const persistBookmarks = function() {
-    localStorage.setItem("bookmarks", JSON.stringify(state.bookmarks));
-};
-const addBookmark = function(recipe) {
-    state.bookmarks.push(recipe);
-    if (recipe.id === state.recipe.id) state.recipe.bookmarked = true;
-    persistBookmarks();
-};
-const deleteBookmark = function(id) {
-    const index = state.bookmarks.findIndex((el)=>el.id === id);
-    state.bookmarks.splice(index, 1);
-    if (id === state.recipe.id) state.recipe.bookmarked = false;
-    persistBookmarks();
-};
-const init = function() {
-    const storage = localStorage.getItem("bookmarks");
-    if (storage) state.bookmarks = JSON.parse(storage);
-};
-init();
-console.log(state.bookmarks);
-const clearBookmarks = function() {
-    localStorage.clear("bookmarks");
-};
-const uploadRecipe = async function(newRecipe) {
-    try {
-        const ingredients = Object.entries(newRecipe).filter((entry)=>entry[0].startsWith("ingredient") && entry[1] !== "").map((ing)=>{
-            const ingArr = ing[1].split(",").map((el)=>el.trim());
-            if (ingArr.length !== 3) throw new Error("Wrong ingredient format");
-            const [quantity, unit, description] = ingArr;
-            return {
-                quantity: quantity ? +quantity : null,
-                unit,
-                description
-            };
-        });
-        const recipe = {
-            title: newRecipe.title,
-            source_url: newRecipe.sourceUrl,
-            image_url: newRecipe.image,
-            publisher: newRecipe.publisher,
-            cooking_time: +newRecipe.cookingTime,
-            servings: +newRecipe.servings,
-            ingredients
-        };
-        const data = await (0, _helpers.AJAX)(`${(0, _config.API_URL)}?key=${(0, _config.KEY)}`, recipe);
-        state.recipe = createRecipeObject(data);
-        addBookmark(state.recipe);
-    } catch (err) {
-        throw err;
-    }
-};
-
-},{"regenerator-runtime":"dXNgZ","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","./config":"k5Hzs","./helpers":"hGI1E"}],"k5Hzs":[function(require,module,exports) {
+},{}],"k5Hzs":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "API_URL", ()=>API_URL);
@@ -2475,7 +2445,37 @@ const RES_PER_PAGE = 10;
 const KEY = "eff56dc0-4711-41af-b56a-c9bced3416c9";
 const MODAL_CLOSE_SECONDS = 2.5;
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"hGI1E":[function(require,module,exports) {
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"gkKU3":[function(require,module,exports) {
+exports.interopDefault = function(a) {
+    return a && a.__esModule ? a : {
+        default: a
+    };
+};
+exports.defineInteropFlag = function(a) {
+    Object.defineProperty(a, "__esModule", {
+        value: true
+    });
+};
+exports.exportAll = function(source, dest) {
+    Object.keys(source).forEach(function(key) {
+        if (key === "default" || key === "__esModule" || dest.hasOwnProperty(key)) return;
+        Object.defineProperty(dest, key, {
+            enumerable: true,
+            get: function() {
+                return source[key];
+            }
+        });
+    });
+    return dest;
+};
+exports.export = function(dest, destName, get) {
+    Object.defineProperty(dest, destName, {
+        enumerable: true,
+        get: get
+    });
+};
+
+},{}],"hGI1E":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "AJAX", ()=>AJAX);
@@ -2541,7 +2541,7 @@ export const sendJSON = async function (url, uploadData) {
 };
 */ 
 
-},{"regenerator-runtime":"dXNgZ","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","./config":"k5Hzs"}],"l60JC":[function(require,module,exports) {
+},{"regenerator-runtime":"dXNgZ","./config":"k5Hzs","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"l60JC":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 var _viewJs = require("./View.js");
@@ -2670,7 +2670,77 @@ class RecipeView extends (0, _viewJsDefault.default) {
 }
 exports.default = new RecipeView();
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","url:../../img/icons.svg":"loVOp","fractional":"3SU56","./View.js":"5cUXS"}],"loVOp":[function(require,module,exports) {
+},{"./View.js":"5cUXS","url:../../img/icons.svg":"loVOp","fractional":"3SU56","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"5cUXS":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _iconsSvg = require("url:../../img/icons.svg");
+var _iconsSvgDefault = parcelHelpers.interopDefault(_iconsSvg);
+class View {
+    _data;
+    render(data, render = true) {
+        if (!data || Array.isArray(data) && data.length === 0) return this.renderError();
+        this._data = data;
+        const markup = this._generateMarkup();
+        if (!render) return markup;
+        this._clear();
+        this._parentElement.insertAdjacentHTML("afterbegin", markup);
+    }
+    update(data) {
+        this._data = data;
+        const newMarkup = this._generateMarkup();
+        const newDOM = document.createRange().createContextualFragment(newMarkup);
+        const newElements = Array.from(newDOM.querySelectorAll("*"));
+        const curElements = Array.from(this._parentElement.querySelectorAll("*"));
+        newElements.forEach((newEl, i)=>{
+            const curEl = curElements[i];
+            if (!newEl.isEqualNode(curEl) && newEl.firstChild?.nodeValue.trim() != "") curEl.textContent = newEl.textContent;
+            if (!newEl.isEqualNode(curEl)) Array.from(newEl.attributes).forEach((attr)=>curEl.setAttribute(attr.name, attr.value));
+        });
+    }
+    _clear() {
+        this._parentElement.innerHTML = "";
+    }
+    renderSpinner() {
+        const markup = `
+      <div class="spinner">
+      <svg>
+        <use href="${(0, _iconsSvgDefault.default)}#icon-loader"></use>
+      </svg>
+      </div> 
+  `;
+        this._clear();
+        this._parentElement.insertAdjacentHTML("afterbegin", markup);
+    }
+    renderError(message = this._errorMessage) {
+        const markup = `
+    <div class="error">
+        <div>
+        <svg>
+            <use href="${(0, _iconsSvgDefault.default)}#icon-alert-triangle"></use>
+        </svg>
+        </div>
+        <p>${message}</p>
+    </div>`;
+        this._clear();
+        this._parentElement.insertAdjacentHTML("afterbegin", markup);
+    }
+    renderMessage(message = this._message) {
+        const markup = `
+    <div class="message">
+        <div>
+        <svg>
+            <use href="${(0, _iconsSvgDefault.default)}#icon-smile"></use>
+        </svg>
+        </div>
+        <p>${message}</p>
+    </div>`;
+        this._clear();
+        this._parentElement.insertAdjacentHTML("afterbegin", markup);
+    }
+}
+exports.default = View;
+
+},{"url:../../img/icons.svg":"loVOp","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"loVOp":[function(require,module,exports) {
 module.exports = require("./helpers/bundle-url").getBundleURL("hWUTQ") + "icons.dfd7a6db.svg" + "?" + Date.now();
 
 },{"./helpers/bundle-url":"lgJ39"}],"lgJ39":[function(require,module,exports) {
@@ -2960,77 +3030,7 @@ Fraction.primeFactors = function(n) {
 };
 module.exports.Fraction = Fraction;
 
-},{}],"5cUXS":[function(require,module,exports) {
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-var _iconsSvg = require("url:../../img/icons.svg");
-var _iconsSvgDefault = parcelHelpers.interopDefault(_iconsSvg);
-class View {
-    _data;
-    render(data, render = true) {
-        if (!data || Array.isArray(data) && data.length === 0) return this.renderError();
-        this._data = data;
-        const markup = this._generateMarkup();
-        if (!render) return markup;
-        this._clear();
-        this._parentElement.insertAdjacentHTML("afterbegin", markup);
-    }
-    update(data) {
-        this._data = data;
-        const newMarkup = this._generateMarkup();
-        const newDOM = document.createRange().createContextualFragment(newMarkup);
-        const newElements = Array.from(newDOM.querySelectorAll("*"));
-        const curElements = Array.from(this._parentElement.querySelectorAll("*"));
-        newElements.forEach((newEl, i)=>{
-            const curEl = curElements[i];
-            if (!newEl.isEqualNode(curEl) && newEl.firstChild?.nodeValue.trim() != "") curEl.textContent = newEl.textContent;
-            if (!newEl.isEqualNode(curEl)) Array.from(newEl.attributes).forEach((attr)=>curEl.setAttribute(attr.name, attr.value));
-        });
-    }
-    _clear() {
-        this._parentElement.innerHTML = "";
-    }
-    renderSpinner() {
-        const markup = `
-      <div class="spinner">
-      <svg>
-        <use href="${(0, _iconsSvgDefault.default)}#icon-loader"></use>
-      </svg>
-      </div> 
-  `;
-        this._clear();
-        this._parentElement.insertAdjacentHTML("afterbegin", markup);
-    }
-    renderError(message = this._errorMessage) {
-        const markup = `
-    <div class="error">
-        <div>
-        <svg>
-            <use href="${(0, _iconsSvgDefault.default)}#icon-alert-triangle"></use>
-        </svg>
-        </div>
-        <p>${message}</p>
-    </div>`;
-        this._clear();
-        this._parentElement.insertAdjacentHTML("afterbegin", markup);
-    }
-    renderMessage(message = this._message) {
-        const markup = `
-    <div class="message">
-        <div>
-        <svg>
-            <use href="${(0, _iconsSvgDefault.default)}#icon-smile"></use>
-        </svg>
-        </div>
-        <p>${message}</p>
-    </div>`;
-        this._clear();
-        this._parentElement.insertAdjacentHTML("afterbegin", markup);
-    }
-}
-exports.default = View;
-
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","url:../../img/icons.svg":"loVOp"}],"9OQAM":[function(require,module,exports) {
+},{}],"9OQAM":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 class SearchView {
@@ -3071,7 +3071,7 @@ class ResultsView extends (0, _viewJsDefault.default) {
 }
 exports.default = new ResultsView();
 
-},{"./View.js":"5cUXS","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","url:../../img/icons.svg":"loVOp","./previewView.js":"1FDQ6"}],"1FDQ6":[function(require,module,exports) {
+},{"./View.js":"5cUXS","./previewView.js":"1FDQ6","url:../../img/icons.svg":"loVOp","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"1FDQ6":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 var _viewJs = require("./View.js");
@@ -3185,7 +3185,7 @@ class BookmarksView extends (0, _viewJsDefault.default) {
 }
 exports.default = new BookmarksView();
 
-},{"./View.js":"5cUXS","url:../../img/icons.svg":"loVOp","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","./previewView.js":"1FDQ6"}],"i6DNj":[function(require,module,exports) {
+},{"./View.js":"5cUXS","./previewView.js":"1FDQ6","url:../../img/icons.svg":"loVOp","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"i6DNj":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 var _viewJs = require("./View.js");
