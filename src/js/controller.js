@@ -22,7 +22,7 @@ const controlRecipes = async function () {
     recipeView.renderSpinner();
 
     resultsView.update(model.getSearchResultsPage());
-
+    bookmarksView.update(model.state.bookmarks);
     //loading
 
     await model.loadRecipe(id);

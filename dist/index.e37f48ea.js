@@ -554,6 +554,7 @@ const controlRecipes = async function() {
         if (!id) return;
         (0, _recipeViewJsDefault.default).renderSpinner();
         (0, _resultsViewJsDefault.default).update(_modelJs.getSearchResultsPage());
+        (0, _bookmarksViewJsDefault.default).update(_modelJs.state.bookmarks);
         //loading
         await _modelJs.loadRecipe(id);
         const { recipe  } = _modelJs.state;
